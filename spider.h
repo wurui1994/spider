@@ -1,6 +1,7 @@
 #ifndef SPIDER_H
 #define SPIDER_H
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,6 +36,8 @@ the max number of the buffers
 #define MaxPageQueueNum 32
 #define LogMaxPageQueueNum 5
 
+#define UNUSED(x) (void)(x)
+
 typedef unsigned char byte;
 
 // typedef
@@ -58,33 +61,31 @@ typedef struct bloom_struct bloom_t;
 */
 struct data_struct
 {
-  char *data[BUFFER_MAX_NUMBER];        /* Array of buffer */
-  unsigned int each[BUFFER_MAX_NUMBER]; /* each buffer's size */
-  int count;                            /* buffer's number */
-  int length;                           /* the sum of all buffer's size */
-  char *url;                            /* the url where it is downloaded */
-  uv_work_t *worker;                    /* Point to the worker */
-  spider_t *cspider;                   /* the Main cspider struct */
+  char *data[BUFFER_MAX_NUMBER];  /* Array of buffer */
+  size_t each[BUFFER_MAX_NUMBER]; /* each buffer's size */
+  size_t count;                   /* buffer's number */
+  size_t length;                  /* the sum of all buffer's size */
+  char *url;                      /* the url where it is downloaded */
+  uv_work_t *worker;              /* Point to the worker */
+  spider_t *cspider;              /* the Main cspider struct */
 };
 
 typedef struct page_struct
 {
   void *data;
-  unsigned int capacity;
-  unsigned int used;
+  size_t capacity;
+  size_t used;
   char file_type;
-}page_t;
+} page_t;
 
 /*
   page carrier'a queue
 */
-
-
 struct page_queue_struct
 {
   page_t *pages;
-  unsigned int capacity;
-  unsigned int usage;
+  size_t capacity;
+  size_t usage;
 };
 
 /*
@@ -99,10 +100,10 @@ struct data_queue_struct
 
 struct task_struct
 {
-  char *url;          // the url which task need to deal with
+  char *url;                // the url which task need to deal with
   struct data_struct *data; // Point to the struct which save the data we download.
-  uv_work_t *worker;  // Point to the worker
-  struct spider *cspider; // Point to the Main cspider struct
+  uv_work_t *worker;        // Point to the worker
+  struct spider *cspider;   // Point to the Main cspider struct
 };
 
 /*
@@ -180,10 +181,9 @@ struct spider
 
 struct xpath_result_struct
 {
-    char** urls;
-    size_t size;
+  char **urls;
+  size_t size;
 };
-
 
 // regex
 int regexAll(const char *regex, char *str, char **res, int num, int flag);
@@ -193,19 +193,19 @@ int match(char *regex, char *str);
 xpath_result_t xpath(char *xml, char *path);
 
 // log
-void logger(int flag, const char *str1, char *str2, spider_t* spider);
+void logger(int flag, const char *str1, const char *str2, spider_t *spider);
 
 // hash functions
 unsigned int sax_hash(char *key);
 unsigned int sdbm_hash(char *key);
 
 char *joinUrl(char *, char *);
-void joinUrls(char *, char **, int);
+void joinUrls(char *, char **, size_t);
 
 // data
 int isDataQueueEmpty(data_queue_t *head);
-data_queue_t *initDataQueue();
-data_t *createData();
+data_queue_t *initDataQueue(void);
+data_t *createData(void);
 void addData(data_queue_t *head, data_queue_t *queue);
 data_queue_t *removeData(data_queue_t *head, data_t *data);
 void freeData(data_queue_t *node);
@@ -215,14 +215,17 @@ void datasave(uv_work_t *req, int status);
 
 // task
 int isTaskQueueEmpty(spider_task_queue_t *head);
-spider_task_queue_t *initTaskQueue();
+spider_task_queue_t *initTaskQueue(void);
 void createTask(spider_task_queue_t *head, char *url);
 spider_task_queue_t *removeTask(spider_task_queue_t *head, spider_task_t *task);
 void addTask(spider_task_queue_t *head, spider_task_queue_t *task);
 void freeTask(spider_task_queue_t *node);
 
 // bloom filter
-bloom_t *bloom_new();
+bloom_t *bloom_new(void);
+int bloom_check(bloom_t *bloom, char *s);
+int bloom_add(bloom_t *bloom, char *s);
+int bloom_destroy(bloom_t *bloom);
 
 //
 size_t save_data(void *ptr, size_t size, size_t nmemb, void *save);
@@ -242,15 +245,15 @@ void spider_setopt_process(spider_t *spider, void (*process)(spider_t *, char *,
 void spider_setopt_save(spider_t *cspider, void (*save)(void *, void *), void *user_data);
 void spider_setopt_threadnum(spider_t *spider, int flag, int number);
 
-spider_t *spider_new();
+spider_t *spider_new(void);
 int spider_run(spider_t *spider);
 
 // user interface
 void saveString(struct spider *spider, void *data, int flag);
-void saveStrings(struct spider *spider, void **datas, int size, int flag);
+void saveStrings(struct spider *spider, void **datas, size_t size, int flag);
 void addUrl(struct spider *spider, char *url);
-void addUrls(struct spider *spider, char **urls, int size);
+void addUrls(struct spider *spider, char **urls, size_t size);
 void freeString(char *str);
-void freeStrings(char **strs, int size);
+void freeStrings(char **strs, size_t size);
 
 #endif

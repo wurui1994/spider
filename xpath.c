@@ -3,20 +3,17 @@
 xpath_result_t print_xpath_nodes(xmlNodeSetPtr nodes)
 {
     xmlNodePtr cur;
-    int size;
-    int i;
-
     // assert(output);
-    size = (nodes) ? nodes->nodeNr : 0;
+    size_t size = (nodes) ? (size_t)nodes->nodeNr : 0;
 
     // fprintf(output, "Result (%d nodes):\n", size);
-    char** get = (char**)malloc(size*sizeof(char*));
-    for (i = 0; i < size; ++i)
+    char **get = (char **)malloc(size * sizeof(char *));
+    for (size_t i = 0; i < size; ++i)
     {
         get[i] = (char *)malloc(sizeof(char));
         assert(nodes->nodeTab[i]);
         cur = (xmlNodePtr)nodes->nodeTab[i];
-//        printf("key : %s \n value : %s\n", cur->name, xmlNodeGetContent(cur));
+        // printf("key : %s \n value : %s\n", cur->name, xmlNodeGetContent(cur));
         get[i] = (char *)xmlNodeGetContent(cur);
     }
 
@@ -38,7 +35,7 @@ xpath_result_t print_xpath_nodes(xmlNodeSetPtr nodes)
  */
 xpath_result_t execute_xpath_expression(const char *filename, const xmlChar *xpathExpr)
 {
-    xpath_result_t result = {NULL,0};
+    xpath_result_t result = {NULL, 0};
     xmlDocPtr doc;
     xmlXPathContextPtr xpathCtx;
     xmlXPathObjectPtr xpathObj;
@@ -49,7 +46,7 @@ xpath_result_t execute_xpath_expression(const char *filename, const xmlChar *xpa
     /* Load XML document */
     // doc = xmlParseFile(filename);
 
-    doc = htmlReadMemory(filename, strlen(filename), NULL, NULL,
+    doc = htmlReadMemory(filename, (int)strlen(filename), NULL, NULL,
                          HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
     // doc = htmlDocPtr(filename, NULL);
     if (doc == NULL)
@@ -89,7 +86,6 @@ xpath_result_t execute_xpath_expression(const char *filename, const xmlChar *xpa
     return result;
 }
 
-
 /**
  * xpath :
  * @xml : the input string
@@ -101,19 +97,14 @@ xpath_result_t execute_xpath_expression(const char *filename, const xmlChar *xpa
  **/
 xpath_result_t xpath(char *xml, char *path)
 {
-
-    int size;
+    xpath_result_t result = {NULL, 0};
     /* Init libxml */
     xmlInitParser();
-    // LIBXML_TEST_VERSION
-
-    xpath_result_t result = {NULL, 0};
 
     /* Do the main job */
     result = execute_xpath_expression(xml, BAD_CAST path);
     if (result.size == 0)
     {
-
         return result;
     }
 
@@ -128,7 +119,8 @@ xpath_result_t xpath(char *xml, char *path)
 }
 
 /*
-int main() {
+int main()
+{
    char *xml = "<doc href=\"jb\"><ni>one</ni><ni>two</ni></doc>";
    char *path = "/doc/ni";
    char *get[10];

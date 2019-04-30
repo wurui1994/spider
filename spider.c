@@ -1,6 +1,5 @@
 #include "spider.h"
 
-
 int isDataQueueEmpty(data_queue_t *head)
 {
     return (head->next == head);
@@ -17,7 +16,6 @@ data_queue_t *initDataQueue()
     return queue;
 }
 
-
 data_t *createData()
 {
     data_t *node = (data_t *)malloc(sizeof(data_t));
@@ -28,7 +26,6 @@ data_t *createData()
 
     return node;
 }
-
 
 void addData(data_queue_t *head, data_queue_t *queue)
 {
@@ -66,8 +63,7 @@ data_queue_t *removeData(data_queue_t *head, data_t *data)
 void freeData(data_queue_t *node)
 {
     free(node->data->worker);
-    int i;
-    for (i = 0; i < node->data->count; i++)
+    for (size_t i = 0; i < node->data->count; i++)
     {
         //逐个free数据块
         // free buffers one by one
@@ -78,7 +74,6 @@ void freeData(data_queue_t *node)
     free(node);
 }
 
-
 void dataproc(uv_work_t *req)
 {
     spider_t *cspider = ((data_t *)req->data)->cspider;
@@ -87,9 +82,8 @@ void dataproc(uv_work_t *req)
     char *get = (char *)malloc(sizeof(char) * text->length + 1);
     assert(get);
 
-    int i;
     int currentCount = 0;
-    for (i = 0; i < text->count; i++)
+    for (size_t i = 0; i < text->count; i++)
     {
         memcpy(get + currentCount, text->data[i], text->each[i]);
         currentCount += text->each[i];
@@ -100,9 +94,9 @@ void dataproc(uv_work_t *req)
     free(get);
 }
 
-
 void datasave(uv_work_t *req, int status)
 {
+    UNUSED(status);
     spider_t *cspider = ((data_t *)req->data)->cspider;
     // log
     logger(0, "%s save finish.\n", ((data_t *)req->data)->url, cspider);
@@ -112,7 +106,7 @@ void datasave(uv_work_t *req, int status)
     data_queue_t *q = removeData(cspider->data_queue_doing, req->data);
     assert(q);
 
-    logger(q != NULL, "removeData error in %s.\n", "dataProcess.c",cspider);
+    logger(q != NULL, "removeData error in %s.\n", "dataProcess.c", cspider);
     freeData(q);
     uv_rwlock_wrunlock(cspider->lock);
 }
@@ -138,15 +132,14 @@ void saveString(spider_t *cspider, void *data, int flag)
     }
 }
 
-void saveStrings(spider_t *cspider, void **datas, int size, int flag)
+void saveStrings(spider_t *cspider, void **datas, size_t size, int flag)
 {
-    int i;
     assert(flag == LOCK || flag == NO_LOCK);
     if (flag == LOCK)
     {
         // need to lock
         uv_rwlock_wrlock(cspider->save_lock);
-        for (i = 0; i < size; i++)
+        for (size_t i = 0; i < size; i++)
         {
             (cspider->save)(datas[i], cspider->save_user_data);
         }
@@ -155,7 +148,7 @@ void saveStrings(spider_t *cspider, void **datas, int size, int flag)
     else
     {
         // no need to lock
-        for (i = 0; i < size; i++)
+        for (size_t i = 0; i < size; i++)
         {
             (cspider->save)(datas[i], cspider->save_user_data);
         }
@@ -168,7 +161,7 @@ void addUrl(spider_t *cspider, char *url)
     {
         // no exits
         bloom_add(cspider->bloom, url);
-        unsigned int len = strlen(url) + 1;
+        size_t len = strlen(url) + 1;
         char *reUrl = (char *)malloc(sizeof(char) * len);
         assert(reUrl);
 
@@ -179,17 +172,16 @@ void addUrl(spider_t *cspider, char *url)
     }
 }
 
-void addUrls(spider_t *cspider, char **urls, int size)
+void addUrls(spider_t *cspider, char **urls, size_t size)
 {
-    int i;
-    char *reUrls[size];
-    for (i = 0; i < size; i++)
+    char **reUrls = (char **)malloc(size * sizeof(char *));
+    for (size_t i = 0; i < size; i++)
     {
         if (!bloom_check(cspider->bloom, urls[i]))
         {
             // no exits
             bloom_add(cspider->bloom, urls[i]);
-            unsigned int len = strlen(urls[i]);
+            size_t len = strlen(urls[i]);
             reUrls[i] = (char *)malloc(sizeof(char) * (len + 1));
             assert(reUrls[i]);
 
@@ -201,7 +193,7 @@ void addUrls(spider_t *cspider, char **urls, int size)
         }
     }
     //  uv_rwlock_wrlock(cspider->lock);
-    for (i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         if (reUrls[i] != NULL)
             createTask(cspider->task_queue, reUrls[i]);
@@ -209,17 +201,14 @@ void addUrls(spider_t *cspider, char **urls, int size)
     //  uv_rwlock_wrunlock(cspider->lock);
 }
 
-
 void freeString(char *str)
 {
     free(str);
 }
 
-
-void freeStrings(char **strs, int size)
+void freeStrings(char **strs, size_t size)
 {
-    int i;
-    for (i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         free(strs[i]);
     }
@@ -240,7 +229,7 @@ void watcher(uv_idle_t *handle)
         {
             //when thread's number reach the max limit
             spider_task_queue_t *rem =
-                    removeTask(cspider->task_queue, cspider->task_queue->next->task);
+                removeTask(cspider->task_queue, cspider->task_queue->next->task);
             assert(rem);
 
             uv_work_t *req = (uv_work_t *)malloc(sizeof(uv_work_t));
@@ -266,7 +255,7 @@ void watcher(uv_idle_t *handle)
         if (cspider->pipeline_thread <= cspider->pipeline_thread_max)
         {
             data_queue_t *rem =
-                    removeData(cspider->data_queue, cspider->data_queue->next->data);
+                removeData(cspider->data_queue, cspider->data_queue->next->data);
             assert(rem);
 
             uv_work_t *req = (uv_work_t *)malloc(sizeof(uv_work_t));
@@ -285,9 +274,9 @@ void watcher(uv_idle_t *handle)
     }
 
     if (!isTaskQueueEmpty(cspider->task_queue_doing) ||
-            !isTaskQueueEmpty(cspider->task_queue) ||
-            !isDataQueueEmpty(cspider->data_queue) ||
-            !isDataQueueEmpty(cspider->data_queue_doing))
+        !isTaskQueueEmpty(cspider->task_queue) ||
+        !isDataQueueEmpty(cspider->data_queue) ||
+        !isDataQueueEmpty(cspider->data_queue_doing))
     {
         uv_rwlock_wrunlock(cspider->lock);
     }
@@ -297,8 +286,6 @@ void watcher(uv_idle_t *handle)
         uv_idle_stop(handle);
     }
 }
-
-
 
 #include "spider.h"
 
@@ -386,11 +373,12 @@ void download(uv_work_t *req)
 **/
 void work_done(uv_work_t *req, int status)
 {
+    UNUSED(status);
     spider_t *cspider = ((spider_task_t *)req->data)->cspider;
     /*打印到日志
     print log
    */
-    logger(0, "%s download finish.\n", ((spider_task_t *)req->data)->url,cspider);
+    logger(0, "%s download finish.\n", ((spider_task_t *)req->data)->url, cspider);
     /*
     when finish download data,
     first, remove task from task_queue_doing
@@ -403,7 +391,7 @@ void work_done(uv_work_t *req, int status)
     assert(q);
 
     data_queue_t *queue =
-            (data_queue_t *)malloc(sizeof(data_queue_t));
+        (data_queue_t *)malloc(sizeof(data_queue_t));
     assert(queue);
 
     queue->data = q->task->data;
@@ -412,7 +400,6 @@ void work_done(uv_work_t *req, int status)
     uv_rwlock_wrunlock(cspider->lock);
     return;
 }
-
 
 /**
 isTaskQueueEmpty : is task queue empty?
@@ -526,8 +513,6 @@ void freeTask(spider_task_queue_t *node)
     free(node);
 }
 
-
-
 #include "spider.h"
 
 /**
@@ -591,7 +576,7 @@ void spider_setopt_url(spider_t *cspider, char *url)
     {
         // url no exits
         bloom_add(cspider->bloom, url);
-        unsigned int len = strlen(url);
+        size_t len = strlen(url);
         char *reUrl = (char *)malloc(sizeof(char) * (len + 1));
         assert(reUrl);
         strncpy(reUrl, url, len + 1);
@@ -603,9 +588,8 @@ void spider_setopt_baseurl(spider_t *cspider, char *url)
 {
     assert(cspider);
     assert(url);
-    cspider->site->base_url =  url;
+    cspider->site->base_url = url;
 }
-
 
 void spider_setopt_cookie(spider_t *cspider, char *cookie)
 {
@@ -614,7 +598,6 @@ void spider_setopt_cookie(spider_t *cspider, char *cookie)
     ((site_t *)cspider->site)->cookie = cookie;
 }
 
-
 void spider_setopt_useragent(spider_t *cspider, char *agent)
 {
     assert(cspider);
@@ -622,14 +605,12 @@ void spider_setopt_useragent(spider_t *cspider, char *agent)
     ((site_t *)cspider->site)->user_agent = agent;
 }
 
-
 void spider_setopt_proxy(spider_t *cspider, char *proxy)
 {
     assert(cspider);
     assert(proxy);
     ((site_t *)cspider->site)->proxy = proxy;
 }
-
 
 void spider_setopt_timeout(spider_t *cspider, long timeout)
 {
@@ -665,7 +646,6 @@ void spider_setopt_save(spider_t *cspider, void (*save)(void *, void *),
     cspider->save_user_data = user_data;
 }
 
-
 void spider_setopt_threadnum(spider_t *cspider, int flag, int number)
 {
     assert(cspider);
@@ -680,7 +660,6 @@ void spider_setopt_threadnum(spider_t *cspider, int flag, int number)
         cspider->pipeline_thread_max = number;
     }
 }
-
 
 int spider_run(spider_t *cspider)
 {
@@ -700,7 +679,7 @@ int spider_run(spider_t *cspider)
     return uv_run(cspider->loop, UV_RUN_DEFAULT);
 }
 
-void logger(int flag, const char *str1, char *str2,spider_t* cspider)
+void logger(int flag, const char *str1, const char *str2, spider_t *cspider)
 {
     if (!flag)
     {
@@ -708,9 +687,8 @@ void logger(int flag, const char *str1, char *str2,spider_t* cspider)
         if (cspider->log != NULL)
         {
             uv_rwlock_wrlock(cspider->log_lock);
-            fprintf(cspider->log, str1, str2);
+            fprintf(cspider->log, "%s %s", str1, str2);
             uv_rwlock_wrunlock(cspider->log_lock);
         }
     }
 }
-

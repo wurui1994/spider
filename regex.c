@@ -39,11 +39,12 @@ int regexAll(const char *regex, char *str, char **res, int num, int flag)
     index = 0;
     do
     {
-        rc = pcre_exec(re, NULL, str, strlen(str), exec_offset, 0, ovector, 30);
+        rc = pcre_exec(re, NULL, str, (int)strlen(str), exec_offset, 0, ovector, 30);
 
         if (rc > 0)
         {
-            pcre_get_substring(str, ovector, rc, flag, &res[index++]);
+            const char *s = res[index++];
+            pcre_get_substring(str, ovector, rc, flag, &s);
             //设置偏移量
             exec_offset = ovector[1];
         }
@@ -78,7 +79,7 @@ int match(char *regex, char *str)
         return -1;
     }
 
-    rc = pcre_exec(re, NULL, str, strlen(str), 0, 0, ovector, 30);
+    rc = pcre_exec(re, NULL, str, (int)strlen(str), 0, 0, ovector, 30);
 
     if (rc > 0)
     {

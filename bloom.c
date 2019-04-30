@@ -13,7 +13,6 @@ bloom_t *create_bloom(size_t size, size_t nfuncs, ...)
 {
     bloom_t *bloom;
     va_list l;
-    int n;
 
     if (!(bloom = (bloom_t *)malloc(sizeof(bloom_t))))
     {
@@ -33,7 +32,7 @@ bloom_t *create_bloom(size_t size, size_t nfuncs, ...)
     }
 
     va_start(l, nfuncs);
-    for (n = 0; n < nfuncs; ++n)
+    for (size_t n = 0; n < nfuncs; ++n)
     {
         bloom->funcs[n] = va_arg(l, hashfunc_t);
     }

@@ -1,49 +1,49 @@
+// gcc -Os *.c -lxml2 -luv -lpcre -lcurl -o spider
+
 #include "spider.h"
 
 char *joinUrl(char *baseuri, char *reluri)
 {
-    int size = strlen(baseuri) + strlen(reluri) + 1;
-    char *res = (char*)malloc(size);
-    memset(res,0,size);
-    if (strncmp(reluri,"http",4) == 0)
+    size_t size = strlen(baseuri) + strlen(reluri) + 1;
+    char *res = (char *)malloc(size);
+    memset(res, 0, size);
+    if (strncmp(reluri, "http", 4) == 0)
     {
-        strcpy(res,reluri);
+        strcpy(res, reluri);
     }
     else
     {
-        strcpy(res,baseuri);
-        strcat(res,reluri);
+        strcpy(res, baseuri);
+        strcat(res, reluri);
     }
     return res;
 }
 
 void rstrip(char *string)
 {
-    int l;
     if (!string)
         return;
-    l = strlen(string) - 1;
-    while (isspace(string[l]) && l >= 0)
+    size_t l = strlen(string) - 1;
+    while (isspace(string[l]) && l)
         string[l--] = 0;
 }
 
 void lstrip(char *string)
 {
-    int i, l;
+    size_t i;
     if (!string)
         return;
-    l = strlen(string);
+    size_t l = strlen(string);
     while (isspace(string[(i = 0)]))
         while (i++ < l)
             string[i - 1] = string[i];
 }
 
-void joinUrls(char *baseuri, char **uris, int size)
+void joinUrls(char *baseuri, char **uris, size_t size)
 {
-    int i;
     char *parsed = NULL;
 
-    for (i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         lstrip(uris[i]);
         rstrip(uris[i]);
@@ -54,7 +54,7 @@ void joinUrls(char *baseuri, char **uris, int size)
         }
         free(uris[i]);
         uris[i] = NULL;
-//        puts(parsed);
+        // puts(parsed);
         uris[i] = parsed;
         parsed = NULL;
     }
@@ -62,11 +62,12 @@ void joinUrls(char *baseuri, char **uris, int size)
 
 void process(spider_t *cspider, char *d, char *url, void *user_data)
 {
+    UNUSED(user_data);
     xpath_result_t result = xpath(d, "//a/@href");
     char **get = result.urls;
-    int size = result.size;
+    size_t size = result.size;
     //  int size = regexAll("http:\\/\\/(.*?)\\.html", d, get, 3, REGEX_ALL);
-    if(cspider->site->base_url)
+    if (cspider->site->base_url)
         url = cspider->site->base_url;
 
     joinUrls(url, get, size);
@@ -103,7 +104,7 @@ int main()
     //设置抓取线程数量，和数据持久化的线程数量
     spider_setopt_threadnum(spider, DOWNLOAD, 2);
     spider_setopt_threadnum(spider, SAVE, 2);
-//    spider_setopt_logfile(spider, stdout);
+    // spider_setopt_logfile(spider, stdout);
 
     return spider_run(spider);
 }
