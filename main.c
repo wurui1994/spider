@@ -8,20 +8,19 @@ void process(spider_t *spider, char *buffer, size_t buffer_size, char *url, void
 			   HTML_PARSE_NOWARNING | HTML_PARSE_NONET;
 	htmlDocPtr doc = htmlReadMemory(buffer, buffer_size, url, NULL, opts);
 	if (!doc)
-		return 0;
+		return;
 	xmlChar *xpath = (xmlChar *)"//a/@href";
 	xmlXPathContextPtr context = xmlXPathNewContext(doc);
 	xmlXPathObjectPtr result = xmlXPathEvalExpression(xpath, context);
 	xmlXPathFreeContext(context);
 	if (!result)
-		return 0;
+		return;
 	xmlNodeSetPtr nodeset = result->nodesetval;
 	if (xmlXPathNodeSetIsEmpty(nodeset))
 	{
 		xmlXPathFreeObject(result);
-		return 0;
+		return;
 	}
-	size_t count = 0;
 	for (int i = 0; i < nodeset->nodeNr; i++)
 	{
 		double r = rand();

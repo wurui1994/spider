@@ -12,6 +12,7 @@
 
 #include <curl/curl.h>
 
+#include <libxml/uri.h>
 #include <libxml/xpath.h>
 #include <libxml/HTMLparser.h>
 
@@ -228,7 +229,7 @@ void spider_setopt_useragent(spider_t *spider, char *agent);
 void spider_setopt_proxy(spider_t *spider, char *proxy);
 void spider_setopt_timeout(spider_t *spider, long timeout);
 void spider_setopt_logfile(spider_t *spider, FILE *log);
-void spider_setopt_process(spider_t *spider, void (*process)(spider_t *, char *, char *, void *), void *user_data);
+void spider_setopt_process(spider_t *spider, void (*process)(spider_t *, char *, size_t, char *, void *), void *user_data);
 void spider_setopt_save(spider_t *spider, void (*save)(void *, void *), void *user_data);
 void spider_setopt_threadnum(spider_t *spider, int flag, int number);
 
