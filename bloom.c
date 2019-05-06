@@ -13,18 +13,19 @@ bloom_t *create_bloom(size_t size, size_t nfuncs, ...)
 {
     bloom_t *bloom;
     va_list l;
-
-    if (!(bloom = (bloom_t *)malloc(sizeof(bloom_t))))
+	bloom = (bloom_t*)malloc(sizeof(bloom_t));
+    if (!bloom)
     {
         return NULL;
     }
-    if (!(bloom->a = calloc((size + CHAR_BIT - 1) / CHAR_BIT, sizeof(char))))
+	bloom->a = calloc((size + CHAR_BIT - 1) / CHAR_BIT, sizeof(char));
+    if (!bloom->a)
     {
         free(bloom);
         return NULL;
     }
-
-    if (!(bloom->funcs = (hashfunc_t *)malloc(nfuncs * sizeof(hashfunc_t))))
+	bloom->funcs = (hashfunc_t*)malloc(nfuncs * sizeof(hashfunc_t));
+    if (!bloom->funcs)
     {
         free(bloom->a);
         free(bloom);

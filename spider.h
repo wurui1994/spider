@@ -10,8 +10,6 @@
 
 #include <uv.h>
 
-#include <pcre.h>
-
 #include <curl/curl.h>
 
 #include <libxml/xpath.h>
@@ -61,21 +59,19 @@ typedef struct bloom_struct bloom_t;
 */
 struct data_struct
 {
-  char *data[BUFFER_MAX_NUMBER];  /* Array of buffer */
-  size_t each[BUFFER_MAX_NUMBER]; /* each buffer's size */
-  size_t count;                   /* buffer's number */
-  size_t length;                  /* the sum of all buffer's size */
-  char *url;                      /* the url where it is downloaded */
-  uv_work_t *worker;              /* Point to the worker */
-  spider_t *cspider;              /* the Main cspider struct */
+	char *buffer;
+	size_t buffer_size;
+	char *url;		   /* the url where it is downloaded */
+	uv_work_t *worker; /* Point to the worker */
+	spider_t *spider; /* the Main spider struct */
 };
 
 typedef struct page_struct
 {
-  void *data;
-  size_t capacity;
-  size_t used;
-  char file_type;
+	void *data;
+	size_t capacity;
+	size_t used;
+	char file_type;
 } page_t;
 
 /*
@@ -83,9 +79,9 @@ typedef struct page_struct
 */
 struct page_queue_struct
 {
-  page_t *pages;
-  size_t capacity;
-  size_t usage;
+	page_t *pages;
+	size_t capacity;
+	size_t usage;
 };
 
 /*
@@ -93,17 +89,17 @@ struct page_queue_struct
 */
 struct data_queue_struct
 {
-  data_t *data;
-  struct data_queue_struct *next; /* next node */
-  struct data_queue_struct *prev; /* previous node */
+	data_t *data;
+	struct data_queue_struct *next; /* next node */
+	struct data_queue_struct *prev; /* previous node */
 };
 
 struct task_struct
 {
-  char *url;                // the url which task need to deal with
-  struct data_struct *data; // Point to the struct which save the data we download.
-  uv_work_t *worker;        // Point to the worker
-  struct spider *cspider;   // Point to the Main cspider struct
+	char url[BUFSIZ];		  // the url which task need to deal with
+	struct data_struct *data; // Point to the struct which save the data we download.
+	uv_work_t *worker;		  // Point to the worker
+	struct spider *spider;   // Point to the Main spider struct
 };
 
 /*
@@ -111,86 +107,77 @@ struct task_struct
 */
 struct task_queue_struct
 {
-  spider_task_t *task;            //
-  struct task_queue_struct *next; // next node
-  struct task_queue_struct *prev; // previous node
+	spider_task_t *task;			//
+	struct task_queue_struct *next; // next node
+	struct task_queue_struct *prev; // previous node
 };
 
 struct site
 {
-  char *base_url;
-  char *user_agent; //user agent
-  char *proxy;      // proxy address
-  char *cookie;     //cookie string
-  long timeout;     // timeout (ms)
+	char *base_url;
+	char *user_agent; //user agent
+	char *proxy;	  // proxy address
+	char *cookie;	 //cookie string
+	long timeout;	 // timeout (ms)
 };
 
 struct bloom_struct
 {
-  size_t asize;      // bloom filter's bit array's size
-  unsigned char *a;  // bit array
-  size_t nfuncs;     // hash function's number
-  hashfunc_t *funcs; // array of hash function
+	size_t asize;	  // bloom filter's bit array's size
+	unsigned char *a;  // bit array
+	size_t nfuncs;	 // hash function's number
+	hashfunc_t *funcs; // array of hash function
 };
 
 struct spider
 {
-  uv_loop_t *loop;
-  uv_idle_t *idler;
+	uv_loop_t *loop;
+	uv_idle_t *idler;
 
-  //task queue
-  struct task_queue_struct *task_queue_doing;
-  struct task_queue_struct *task_queue;
+	//task queue
+	struct task_queue_struct *task_queue_doing;
+	struct task_queue_struct *task_queue;
 
-  //data queue
-  struct data_queue_struct *data_queue;
-  struct data_queue_struct *data_queue_doing;
+	//data queue
+	struct data_queue_struct *data_queue;
+	struct data_queue_struct *data_queue_doing;
 
-  //
-  void *process_user_data;
-  void *save_user_data;
+	//
+	void *process_user_data;
 
-  //Max thread number
-  int download_thread_max;
-  int pipeline_thread_max;
+	//Max thread number
+	int download_thread_max;
+	int pipeline_thread_max;
 
-  //current thread number
-  int download_thread;
-  int pipeline_thread;
+	//current thread number
+	int download_thread;
+	int pipeline_thread;
 
-  //lock
-  uv_rwlock_t *lock;
+	//lock
+	uv_rwlock_t *lock;
 
-  //data persistence lock
-  uv_rwlock_t *save_lock;
+	//include useragent, cookie, timeout, proxy
+	site_t *site;
 
-  //include useragent, cookie, timeout, proxy
-  site_t *site;
+	//log file
+	FILE *log;
+	uv_rwlock_t *log_lock;
 
-  //log file
-  FILE *log;
-  uv_rwlock_t *log_lock;
+	//bloom filter
+	struct bloom_struct *bloom;
 
-  //bloom filter
-  struct bloom_struct *bloom;
-
-  // custom function
-  void (*process)(struct spider *cspider, char *d, char *url, void *user_data);
-  void (*save)(void *data, void *user_data);
+	// custom function
+	void (*process)(struct spider *spider, char *buffer, size_t buffer_size, char *url, void *user_data);
 };
 
 struct xpath_result_struct
 {
-  char **urls;
-  size_t size;
+	char **urls;
+	size_t size;
 };
 
-// regex
-int regexAll(const char *regex, char *str, char **res, int num, int flag);
-int match(char *regex, char *str);
-
 // xpath
-xpath_result_t xpath(char *xml, char *path);
+xpath_result_t xpath(char *xml, char *path, char *url);
 
 // log
 void logger(int flag, const char *str1, const char *str2, spider_t *spider);
@@ -210,7 +197,7 @@ void addData(data_queue_t *head, data_queue_t *queue);
 data_queue_t *removeData(data_queue_t *head, data_t *data);
 void freeData(data_queue_t *node);
 
-void dataproc(uv_work_t *req);
+void process_data(uv_work_t *req);
 void datasave(uv_work_t *req, int status);
 
 // task
@@ -237,12 +224,12 @@ void watcher(uv_idle_t *handle);
 void spider_setopt_url(spider_t *spider, char *url);
 void spider_setopt_baseurl(spider_t *spider, char *url);
 void spider_setopt_cookie(spider_t *spider, char *cookie);
-void spider_setopt_useragent(spider_t *cspider, char *agent);
+void spider_setopt_useragent(spider_t *spider, char *agent);
 void spider_setopt_proxy(spider_t *spider, char *proxy);
 void spider_setopt_timeout(spider_t *spider, long timeout);
 void spider_setopt_logfile(spider_t *spider, FILE *log);
 void spider_setopt_process(spider_t *spider, void (*process)(spider_t *, char *, char *, void *), void *user_data);
-void spider_setopt_save(spider_t *cspider, void (*save)(void *, void *), void *user_data);
+void spider_setopt_save(spider_t *spider, void (*save)(void *, void *), void *user_data);
 void spider_setopt_threadnum(spider_t *spider, int flag, int number);
 
 spider_t *spider_new(void);

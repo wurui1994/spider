@@ -18,7 +18,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 macx {
     INCLUDEPATH += /usr/local/include
     DEPENDPATH += /usr/local/lib
-    LIBS += -L"/usr/local/lib" -lxml2 -lcurl -lpcre  -luv
+    LIBS += -L"/usr/local/lib" -lxml2 -lcurl -luv
 }
 
 # You can also make your code fail to compile if you use deprecated APIs.
@@ -31,6 +31,4 @@ HEADERS += \
            spider.h
 SOURCES += main.c \
            spider.c \
-           bloom.c \
-           regex.c \
-           xpath.c
+           bloom.c
