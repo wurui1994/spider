@@ -1,0 +1,22 @@
+name: C/C++ CI
+
+on:
+  watch:
+    types: started
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: xmake-io/github-action-setup-xmake@v1
+      with:
+        xmake-version: latest
+    - name: build
+      run: xmake run
