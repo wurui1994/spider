@@ -5,5 +5,7 @@ core/.ycm_extra_conf.py
 core/.ycm_extra_conf.pyc
 .vscode
 .vs
+.xmake
+build
 Debug
 Release
