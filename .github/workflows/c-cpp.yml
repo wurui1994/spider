@@ -17,5 +17,5 @@ jobs:
         brew info xmake
     - name: build
       run: |
-        xmake build
+        xmake build -y
         xmake show
